@@ -10,6 +10,40 @@ const double FAIL = 13.666;
 const double FAIL_POP = 13.666;
 const int    POISON = -99;
 const int    NULL_ARGUMENT = -1;
+
+class exception_parent
+{
+public: 
+	 virtual char* WhatIsIt()
+	{
+		char* answer = new char[10];
+		sprintf(answer, "Unknown exception");
+		return answer;
+	}
+};
+
+class damaged_class_exception : public exception_parent
+{
+public:
+	 virtual char* WhatIsIt()
+	{
+		char* answer = new char[10];
+		sprintf(answer, "Stack is damaged!");
+		return answer;
+	}
+};
+
+class division_by_zero_exception : public exception_parent
+{
+public:
+	virtual char* WhatIsIt()
+	{
+		char* answer = new char[10];
+		sprintf(answer, "Division by zero!");
+		return answer;
+	}
+};
+
 template <typename T>
 class stack
 {
@@ -24,7 +58,8 @@ public:
 	{
 		st.Count = 0;
 		st.value = (T*)calloc(1, sizeof(T));
-		assert(st.value);
+		if (st.value == NULL) throw(new damaged_class_exception);
+		//assert(st.value);
 	}
 	//~stack();
 
@@ -35,17 +70,15 @@ public:
 
 	int stack_push(T value)
 	{
-		if (!st.value)return NULL_ARGUMENT;
-		if (stack_ok() == 1)
-			return 1;
-
+		if (!st.value)throw(new damaged_class_exception);
+		stack_ok();
+		assert(st.value);
 		st.value = (T*)realloc(st.value, sizeof(T)* (st.Count + 1));
 		assert(st.value);
 		st.value[st.Count++] = value;
 
 		if (!st.Count)return NULL_ARGUMENT;
-		if (stack_ok() == 1)
-			return 1;
+		stack_ok();
 
 		return 0;
 	}
@@ -53,8 +86,7 @@ public:
 	int add()
 	{
 
-		if (stack_ok() == 1)
-			return 1;
+		stack_ok();
 
 		double a = st.value[--st.Count];
 		double b = st.value[--st.Count];
@@ -62,15 +94,14 @@ public:
 		if (st.value[st.Count - 1] == -0.0)
 			st.value[st.Count - 1] = 0.0;
 
-		if (stack_ok() == 1)
-			return 1;
+		stack_ok();
 		return 0;
 	}
 
 	T stack_pop()
 	{
-		if (stack_ok() == 1)
-			return 1;
+		stack_ok();
+			
 
 		if (st.Count > 0)
 			return st.value[--st.Count];
@@ -79,22 +110,36 @@ public:
 			return FAIL_POP;
 		}
 	}
-	int div()
+ int div()
 	{
-		if (stack_ok() == 1)
-			return 1;
-
-		double a = st.value[--st.Count];
-		double b = st.value[--st.Count];
-
-		if (a != 0)
+		stack_ok();
+		T a = st.value[--st.Count];
+		T b = st.value[--st.Count];
+		try
 		{
-			st.value[st.Count++] = b / a;
-			if (st.value[st.Count] == -0.0)
-				st.value[st.Count] = 0.0;
-			if (stack_ok() == 1)
-				return 1;
-			return 0;
+			
+
+			if (a != 0)
+			{
+				st.value[st.Count++] = b / a;
+				if (st.value[st.Count] == -0.0)
+					st.value[st.Count] = 0.0;
+				stack_ok();
+				return 0;
+			}
+			else throw new division_by_zero_exception;
+		}
+		catch (division_by_zero_exception* er)
+		{
+			//this* = this* + b
+			//this* = this* + a;
+			stack_push(b);
+			stack_push(a);
+			printf("%s", er->WhatIsIt());
+		}
+		catch (...)
+		{
+			printf("SMTH WENT WRONG!");
 		}
 
 		return 1;
@@ -102,22 +147,19 @@ public:
 	}
 	int mul()
 	{
-		if (stack_ok() == 1)
-			return 1;
+		stack_ok();
 		double a = st.value[--st.Count];
 		double b = st.value[--st.Count];
 		st.value[st.Count++] = a * b;
 		if (st.value[st.Count - 1] == -0.0)
 			st.value[st.Count - 1] = 0.0;
 
-		if (stack_ok() == 1)
-			return 1;
+		stack_ok();
 		return 0;
 	}
 	int sqrt()
 	{
-		if (stack_ok() == 1)
-			return 1;
+		stack_ok();
 
 		double a = st.value[--st.Count];
 
@@ -125,15 +167,14 @@ public:
 		if (st.value[st.Count - 1] == -0.0)
 			st.value[st.Count - 1] = 0.0;
 
-		if (stack_ok() == 1)
-			return 1;
+		stack_ok();
 		return 0;
 	}
-	int stack_ok()
+	void stack_ok()
 	{
 		if ((st.Count >= 0) && (st.value != NULL))
-			return 0;
-		return 1;
+			return ;
+		throw(new damaged_class_exception);
 	}
 
 
@@ -145,6 +186,11 @@ stack<T> operator +(stack<T> st, T2 value)
 	st.stack_push(value);
 	return st;
 }
+
+
+//next lines are for deprecated functions that used in my other projects
+
+
 
 struct stackt
 {
@@ -165,7 +211,7 @@ int sqrt(stackt *st);
 
 int mul(stackt *st);
 
-int div(stackt *st);//a*b
+int div(stackt *st);
 
 int stack_ctor(stackt *st);
 
