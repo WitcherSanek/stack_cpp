@@ -16,7 +16,7 @@ class exception_parent
 public: 
 	 virtual char* WhatIsIt()
 	{
-		char* answer = new char[10];
+		char* answer = new char[50];
 		sprintf(answer, "Unknown exception");
 		return answer;
 	}
@@ -27,18 +27,41 @@ class damaged_class_exception : public exception_parent
 public:
 	 virtual char* WhatIsIt()
 	{
-		char* answer = new char[10];
+		char* answer = new char[50];
 		sprintf(answer, "Stack is damaged!");
 		return answer;
 	}
 };
+
+class trying_to_pop_from_empty_stack : public exception_parent
+{
+public:
+	virtual char* WhatIsIt()
+	{
+		char* answer = new char[50];
+		sprintf(answer, "Stack is empty!Can't pop!");
+		return answer;
+	}
+};
+
+class stack_overflow : public exception_parent
+{
+public:
+	virtual char* WhatIsIt()
+	{
+		char* answer = new char[50];
+		sprintf(answer, "Stack overflow! Try to use less than 2^14(16777216) elements!");
+		return answer;
+	}
+};
+
 
 class division_by_zero_exception : public exception_parent
 {
 public:
 	virtual char* WhatIsIt()
 	{
-		char* answer = new char[10];
+		char* answer = new char[50];
 		sprintf(answer, "Division by zero!");
 		return answer;
 	}
@@ -48,6 +71,7 @@ template <typename T>
 class stack
 {
 public:
+	int current_max_size = 1;
 	struct stackt
 	{
 		int Count = POISON;
@@ -70,15 +94,25 @@ public:
 
 	int stack_push(T value)
 	{
-		if (!st.value)throw(new damaged_class_exception);
+		//if (!st.value)throw(new damaged_class_exception);
 		stack_ok();
-		assert(st.value);
-		st.value = (T*)realloc(st.value, sizeof(T)* (st.Count + 1));
-		assert(st.value);
-		st.value[st.Count++] = value;
-
+		if (st.Count + 1 >= current_max_size&&current_max_size<10000000)
+		{
+			current_max_size *= 2;
+			
+			st.value = (T*)realloc(st.value, sizeof(T) * current_max_size);
+		}
+		stack_ok();
+		//assert(st.value);
+		//st.value = (T*)realloc(st.value, sizeof(T)* (st.Count + 1));
+		//assert(st.value);
+		//if (st.Count++ < 0)throw(new damaged_class_exception);
+		
+		st.value[st.Count] = value;
+		st.Count++;
+		stack_ok();
 		if (!st.Count)return NULL_ARGUMENT;
-		stack_ok();
+		
 
 		return 0;
 	}
@@ -107,6 +141,7 @@ public:
 			return st.value[--st.Count];
 		else
 		{
+			throw(new trying_to_pop_from_empty_stack);
 			return FAIL_POP;
 		}
 	}
@@ -172,8 +207,10 @@ public:
 	}
 	void stack_ok()
 	{
-		if ((st.Count >= 0) && (st.value != NULL))
-			return ;
+		if ((st.Count >= 0) && (st.value != NULL) && (st.Count+1 <= current_max_size))
+			return;
+		if (st.Count >= current_max_size) throw(new stack_overflow);
+		//if (st.value == NULL)throw(new stack_overflow);
 		throw(new damaged_class_exception);
 	}
 
