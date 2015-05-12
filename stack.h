@@ -11,6 +11,7 @@ const double FAIL_POP = 13.666;
 const int    POISON = -99;
 const int    NULL_ARGUMENT = -1;
 const int	 EXCEPTION_LENGTH = 50;
+const int	 HALF_OF_MAX_STACK_SIZE = 8388609;
 class exception_parent
 {
 public: 
@@ -96,7 +97,7 @@ public:
 	{
 		
 		stack_ok();
-		if (st.Count + 1 >= current_max_size&&current_max_size<10000000)
+		if (st.Count + 1 >= current_max_size&&current_max_size<HALF_OF_MAX_STACK_SIZE) //double max size if it didnt reach cap
 		{
 			current_max_size *= 2;
 			
@@ -120,7 +121,7 @@ public:
 		double a = st.value[--st.Count];
 		double b = st.value[--st.Count];
 		st.value[st.Count++] = a + b;
-		if (st.value[st.Count - 1] == -0.0)
+		if (st.value[st.Count - 1] == -0.0)   //no more -0.0
 			st.value[st.Count - 1] = 0.0;
 
 		stack_ok();
@@ -149,7 +150,7 @@ public:
 		{
 			
 
-			if (a != 0)
+			if (a != 0)     //catch exception division by 0
 			{
 				st.value[st.Count++] = b / a;
 				if (st.value[st.Count] == -0.0)
@@ -161,8 +162,6 @@ public:
 		}
 		catch (division_by_zero_exception* er)
 		{
-			//this* = this* + b
-			//this* = this* + a;
 			stack_push(b);
 			stack_push(a);
 			printf("%s", er->WhatIsIt());
@@ -220,33 +219,3 @@ stack<T> operator +(stack<T> st, T2 value)
 }
 
 
-//next lines are for deprecated functions that used in my other projects
-
-
-
-struct stackt
-{
-	int Count = POISON;
-	double* value = NULL;
-};
-
-
-int stack_ok(stackt *st);
-
-int stack_push(stackt *st, double value);
-
-double stack_pop(stackt *st);
-
-int add(stackt *st);
-
-int sqrt(stackt *st);
-
-int mul(stackt *st);
-
-int div(stackt *st);
-
-int stack_ctor(stackt *st);
-
-int stack_dtor(stackt *st);
-
-int stack_print(stackt *st);
