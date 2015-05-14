@@ -11,7 +11,7 @@ const double FAIL = 13.666;
 const double FAIL_POP = 13.666;
 const int    POISON = -99;
 const int    NULL_ARGUMENT = -1;
-const int	 EXCEPTION_LENGTH = 50;
+const int	 EXCEPTION_LENGTH = 200;
 const int	 HALF_OF_MAX_STACK_SIZE = 8388608;
 const int	 MAX_STACK_SIZE = HALF_OF_MAX_STACK_SIZE * 2;
 class exception_parent: public std::exception
